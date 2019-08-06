@@ -1,6 +1,6 @@
 <template>
   <v-container>
-    <v-layout text-center wrap>
+    <v-layout wrap>
       <h3 class="indigo--text">Instagram configurations</h3>
       <v-flex xs12>
         <v-text-field
@@ -14,25 +14,78 @@
       <h3 class="indigo--text">Presentation configurations</h3>
       <v-flex xs12>
         <v-text-field
+          type="number"
           :rules="numberOfPostRules"
           v-model="numberOfPostsToDisplay"
-          label="Max number of posts to display (Use 0 for displaying all available posts)"/>
+          label="Number of posts to display (Use 0 for all posts)"/>
       </v-flex>
 
-      <v-flex xs12>
+      <v-flex>
         <v-text-field
           v-model="excludedHashtags"
           label="Excluded Hashtags, separated by commas"/>
       </v-flex>
 
-      <h3 class="indigo--text">Size configurations</h3>
       <v-flex xs12>
-        <v-subheader>Main image's width</v-subheader>
-        <v-slider
-          v-model="defaultMainImageWidth"
-          min="20"
-          max="30"
-          thumb-label/>
+        <h3 class="indigo--text">Size configurations</h3>
+      </v-flex>
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          class="pr-3"
+          v-model="profilePicWidth"
+          label="Profile image width"/>
+      </v-flex>
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          v-model="profilePicHeight"
+          label="Profile image height"/>
+      </v-flex>
+
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          class="pr-3"
+          v-model="imgMainWidth"
+          label="Main image width"/>
+      </v-flex>
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          v-model="imgMainHeight"
+          label="Main image height"/>
+      </v-flex>
+
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          class="pr-3"
+          v-model="likeTextSize"
+          label="Likes text size"/>
+      </v-flex>
+
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          v-model="commentTextSize"
+          label="Comments text size"/>
+      </v-flex>
+
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          class="pr-3"
+          v-model="descriptionTextSize"
+          label="Description text size"/>
+      </v-flex>
+      <v-flex xs6/>
+
+      <v-flex xs12>
+        <v-text-field
+          type="number"
+          v-model="presentInterval"
+          label="Each image is shown for: (in ms, 1000ms = 1 second)"/>
       </v-flex>
 
       <h3 class="indigo--text">Visibility configurations</h3>
@@ -71,6 +124,7 @@ import axios from 'axios';
 export default {
   data() {
     return {
+      // Data variables
       instagramSourceUrl: '',
       numberOfPostsToDisplay: 0,
       excludedHashtags: '',
@@ -80,8 +134,19 @@ export default {
       isCommentsDisplayed: false,
       isDescriptionDisplayed: false,
       isInstagramSourceValid: false,
+      // Messages
       instagramSourceUrlErrorMsg: 'Please specify a valid Instagram user URL',
-      defaultMainImageWidth: 1920,
+      // Size variables
+      profilePicWidth: 0,
+      profilePicHeight: 0,
+      usernameTextSize: 0,
+      imgMainWidth: 0,
+      imgMainHeight: 0,
+      likeTextSize: 0,
+      commentTextSize: 0,
+      descriptionTextSize: 0,
+      presentInterval: 0,
+      // Validation rules
       numberOfPostRules: [
         v => /^-{0,1}\d+$/.test(v) || 'Number of post must be an integer',
         v => parseInt(v, 10) >= 0 || 'Number of post must >= 0',
@@ -97,6 +162,7 @@ export default {
       try {
         const { data: appPreferences } = await axios.get(`http://${location.host}/preference`);
 
+        // Data variables
         this.instagramSourceUrl = appPreferences.instagramSourceUrl;
         this.numberOfPostsToDisplay = appPreferences.numberOfPostsToDisplay;
         this.excludedHashtags = appPreferences.excludedHashtags;
@@ -105,6 +171,16 @@ export default {
         this.isLikesDisplayed = appPreferences.isLikesDisplayed;
         this.isCommentsDisplayed = appPreferences.isCommentsDisplayed;
         this.isDescriptionDisplayed = appPreferences.isDescriptionDisplayed;
+        // Size variables
+        this.profilePicWidth = appPreferences.profilePicWidth;
+        this.profilePicHeight = appPreferences.profilePicHeight;
+        this.usernameTextSize = appPreferences.usernameTextSize;
+        this.imgMainWidth = appPreferences.imgMainWidth;
+        this.imgMainHeight = appPreferences.imgMainHeight;
+        this.likeTextSize = appPreferences.likeTextSize;
+        this.commentTextSize = appPreferences.commentTextSize;
+        this.descriptionTextSize = appPreferences.descriptionTextSize;
+        this.presentInterval = appPreferences.presentInterval;
       } catch (e) {
         console.warn(e);
       }
@@ -120,6 +196,16 @@ export default {
           isLikesDisplayed: this.isLikesDisplayed,
           isCommentsDisplayed: this.isCommentsDisplayed,
           isDescriptionDisplayed: this.isDescriptionDisplayed,
+          // Size variables
+          profilePicWidth: this.profilePicWidth,
+          profilePicHeight: this.profilePicHeight,
+          usernameTextSize: this.usernameTextSize,
+          imgMainWidth: this.imgMainWidth,
+          imgMainHeight: this.imgMainHeight,
+          likeTextSize: this.likeTextSize,
+          commentTextSize: this.commentTextSize,
+          descriptionTextSize: this.descriptionTextSize,
+          presentInterval: this.presentInterval,
         };
 
         await axios.post(`http://${location.host}/preference`, payload);
