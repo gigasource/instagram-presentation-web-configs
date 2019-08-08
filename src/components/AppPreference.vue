@@ -1,151 +1,145 @@
 <template>
   <v-container>
     <v-layout wrap>
-      <template v-if="!isWifiConnected">
-        <v-flex xs12>
-          <v-list>
-            <v-subheader class="indigo--text display-1">Wifi list</v-subheader>
-            <v-list-item-group v-model="selectedWifiIndex" color="primary">
-              <v-list-item v-for="(wifi, index) in wifis" :key="index">
-                <v-list-item-content>
-                  <v-list-item-title v-text="wifi"></v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list-item-group>
-          </v-list>
-        </v-flex>
+      <h3 class="indigo--text">Instagram configurations</h3>
+      <v-flex xs12>
+        <v-text-field
+          :error="!isInstagramSourceValid"
+          :error-messages="instagramSourceUrlErrorMsg"
+          @change="validateInstagramSource"
+          v-model="instagramSourceUrl"
+          label="Instagram source URL"/>
+      </v-flex>
 
-        <v-flex xs12 mt-12 v-if="selectedWifiIndex !== null">
-          <h4>Selected network: {{wifis[selectedWifiIndex]}}</h4>
+      <h3 class="indigo--text">Presentation configurations</h3>
+      <v-flex xs12>
+        <v-text-field
+          type="number"
+          :rules="numberOfPostRules"
+          v-model="numberOfPostsToDisplay"
+          label="Number of posts to display (Use 0 for all posts)"/>
+      </v-flex>
+
+      <v-flex>
+        <v-text-field
+          v-model="excludedHashtags"
+          label="Excluded Hashtags, separated by commas"/>
+      </v-flex>
+
+      <v-flex xs12>
+        <h3 class="indigo--text">Size configurations</h3>
+      </v-flex>
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          class="pr-3"
+          v-model="profilePicWidth"
+          label="Profile image width"/>
+      </v-flex>
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          v-model="profilePicHeight"
+          label="Profile image height"/>
+      </v-flex>
+
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          class="pr-3"
+          v-model="imgMainWidth"
+          label="Main image width"/>
+      </v-flex>
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          v-model="imgMainHeight"
+          label="Main image height"/>
+      </v-flex>
+
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          class="pr-3"
+          v-model="likeTextSize"
+          label="Likes text size"/>
+      </v-flex>
+
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          v-model="commentTextSize"
+          label="Comments text size"/>
+      </v-flex>
+
+      <v-flex xs6>
+        <v-text-field
+          type="number"
+          class="pr-3"
+          v-model="descriptionTextSize"
+          label="Description text size"/>
+      </v-flex>
+      <v-flex xs6/>
+
+      <v-flex xs12>
+        <v-text-field
+          type="number"
+          v-model="presentInterval"
+          label="Each image is shown for: (in ms, 1000ms = 1 second)"/>
+      </v-flex>
+
+      <h3 class="indigo--text">Visibility configurations</h3>
+      <v-flex xs12>
+        <v-switch v-model="isProfilePicDisplayed" :label="profilePicMsg"/>
+      </v-flex>
+
+      <v-flex xs12>
+        <v-switch v-model="isUsernameDisplayed" :label="usernameMsg"/>
+      </v-flex>
+
+      <v-flex xs12>
+        <v-switch v-model="isLikesDisplayed" :label="likeMsg"/>
+      </v-flex>
+
+      <v-flex xs12>
+        <v-switch v-model="isCommentsDisplayed" :label="commentMsg"/>
+      </v-flex>
+
+      <v-flex xs12>
+        <v-switch v-model="isDescriptionDisplayed" :label="descriptionMsg"/>
+      </v-flex>
+
+      <template v-if="!isLicenseValid">
+        <h3 class="indigo--text">License configurations (Your key id is {{licenseKeyId}})</h3>
+        <v-flex xs9>
           <v-text-field
-            type="password"
-            v-model="password"
-            label="Enter password"/>
+            class="pr-3"
+            v-model="licenseKey"
+            label="Enter license key"/>
         </v-flex>
-        <v-flex xs12 mt-6 v-if="selectedWifiIndex !== null">
-          <v-btn color="primary mr-2" large @click="connectToNetwork">Connect</v-btn>
-          <v-btn color="success" large @click="getAvailableWifis">Scan</v-btn>
-        </v-flex>
-        <v-flex xs12>
-          <h3 :class="{'indigo--text': isConnectionOk,
-          'red--text': !isConnectionOk}">{{networkConnectionResult}}</h3>
+        <v-flex xs3>
+          <v-layout align-center fill-height>
+            <v-btn class="white--text" color="green"
+                   :disabled="isLicenseSubmitted && isLicenseValid"
+                   @click="validateKey">Submit
+            </v-btn>
+          </v-layout>
         </v-flex>
       </template>
-      <template v-else>
-        <h3 class="indigo--text">Instagram configurations</h3>
-        <v-flex xs12>
-          <v-text-field
-            :error="!isInstagramSourceValid"
-            :error-messages="instagramSourceUrlErrorMsg"
-            @change="validateInstagramSource"
-            v-model="instagramSourceUrl"
-            label="Instagram source URL"/>
-        </v-flex>
 
-        <h3 class="indigo--text">Presentation configurations</h3>
-        <v-flex xs12>
-          <v-text-field
-            type="number"
-            :rules="numberOfPostRules"
-            v-model="numberOfPostsToDisplay"
-            label="Number of posts to display (Use 0 for all posts)"/>
-        </v-flex>
-
-        <v-flex>
-          <v-text-field
-            v-model="excludedHashtags"
-            label="Excluded Hashtags, separated by commas"/>
-        </v-flex>
-
-        <v-flex xs12>
-          <h3 class="indigo--text">Size configurations</h3>
-        </v-flex>
-        <v-flex xs6>
-          <v-text-field
-            type="number"
-            class="pr-3"
-            v-model="profilePicWidth"
-            label="Profile image width"/>
-        </v-flex>
-        <v-flex xs6>
-          <v-text-field
-            type="number"
-            v-model="profilePicHeight"
-            label="Profile image height"/>
-        </v-flex>
-
-        <v-flex xs6>
-          <v-text-field
-            type="number"
-            class="pr-3"
-            v-model="imgMainWidth"
-            label="Main image width"/>
-        </v-flex>
-        <v-flex xs6>
-          <v-text-field
-            type="number"
-            v-model="imgMainHeight"
-            label="Main image height"/>
-        </v-flex>
-
-        <v-flex xs6>
-          <v-text-field
-            type="number"
-            class="pr-3"
-            v-model="likeTextSize"
-            label="Likes text size"/>
-        </v-flex>
-
-        <v-flex xs6>
-          <v-text-field
-            type="number"
-            v-model="commentTextSize"
-            label="Comments text size"/>
-        </v-flex>
-
-        <v-flex xs6>
-          <v-text-field
-            type="number"
-            class="pr-3"
-            v-model="descriptionTextSize"
-            label="Description text size"/>
-        </v-flex>
-        <v-flex xs6/>
-
-        <v-flex xs12>
-          <v-text-field
-            type="number"
-            v-model="presentInterval"
-            label="Each image is shown for: (in ms, 1000ms = 1 second)"/>
-        </v-flex>
-
-        <h3 class="indigo--text">Visibility configurations</h3>
-        <v-flex xs12>
-          <v-switch v-model="isProfilePicDisplayed" :label="profilePicMsg"/>
-        </v-flex>
-
-        <v-flex xs12>
-          <v-switch v-model="isUsernameDisplayed" :label="usernameMsg"/>
-        </v-flex>
-
-        <v-flex xs12>
-          <v-switch v-model="isLikesDisplayed" :label="likeMsg"/>
-        </v-flex>
-
-        <v-flex xs12>
-          <v-switch v-model="isCommentsDisplayed" :label="commentMsg"/>
-        </v-flex>
-
-        <v-flex xs12>
-          <v-switch v-model="isDescriptionDisplayed" :label="descriptionMsg"/>
-        </v-flex>
-
-        <!--Buttons at the bottom-->
-        <v-flex xs12>
+      <v-flex xs12>
+        <h6 class="green--text" v-if="isLicenseSubmitted && isLicenseValid">
+          Success! please click "Save" to refresh the application</h6>
+        <h6 class="red--text" v-else-if="isLicenseSubmitted && !isLicenseValid">
+          Invalid license key</h6>
+      </v-flex>
+      <!--Buttons at the bottom-->
+      <v-flex xs12 mt-12>
+        <v-layout justify-center>
           <v-btn class="mr-2" color="primary" @click="saveAppPreference" large>Save</v-btn>
           <v-btn color="error" @click="getAppPreferences" large dark>Reset</v-btn>
-        </v-flex>
-      </template>
+        </v-layout>
+      </v-flex>
     </v-layout>
   </v-container>
 </template>
@@ -166,13 +160,11 @@ export default {
       isCommentsDisplayed: false,
       isDescriptionDisplayed: false,
       isInstagramSourceValid: false,
-
-      isWifiConnected: false,
-      selectedWifiIndex: null,
-      wifis: [],
-      password: '',
-      networkConnectionResult: '',
-      isConnectionOk: false,
+      // License variables
+      licenseKey: '',
+      licenseKeyId: '',
+      isLicenseValid: false,
+      isLicenseSubmitted: false,
       // Messages
       instagramSourceUrlErrorMsg: 'Please specify a valid Instagram user URL',
       // Size variables
@@ -195,13 +187,12 @@ export default {
   created() {
     this.getAppPreferences();
     this.validateInstagramSource();
-    this.checkWifiConnection();
-    this.getAvailableWifis();
+    this.getLicenseKeyId();
   },
   methods: {
     async getAppPreferences() {
       try {
-        const { data: appPreferences } = await axios.get(`http://${location.host}/preference`);
+        const { data: appPreferences } = await axios.get(`http://${location.host}/api/v1/preference`);
 
         // Data variables
         this.instagramSourceUrl = appPreferences.instagramSourceUrl;
@@ -249,7 +240,7 @@ export default {
           presentInterval: this.presentInterval,
         };
 
-        await axios.post(`http://${location.host}/preference`, payload);
+        await axios.post(`http://${location.host}/api/v1/preference`, payload);
       } catch (e) {
         console.error(e);
       }
@@ -264,34 +255,24 @@ export default {
         this.isInstagramSourceValid = false;
       }
     },
-    async checkWifiConnection() {
+    async getLicenseKeyId() {
       try {
-        const response = await axios.get(`http://${location.host}/wifi/connected`);
-        this.isWifiConnected = response.data.isWifiConnected;
+        const { data: licenseKeyId } = await axios.get(`http://${location.host}/api/v1/license`);
+        this.licenseKeyId = licenseKeyId;
       } catch (e) {
-        console.error(e);
+        console.warn(e);
       }
     },
-    async getAvailableWifis() {
-      try {
-        const response = await axios.get(`http://${location.host}/wifi`);
-        this.wifis = response.data;
-      } catch (e) {
-        console.error(e);
-      }
-    },
-    async connectToNetwork() {
-      try {
-        const payload = {
-          ssid: this.wifis[this.selectedWifiIndex],
-          passphrase: this.password,
-        };
-        const response = await axios.post(`http://${location.host}/wifi/connect`, payload);
+    async validateKey() {
+      this.isLicenseSubmitted = true;
 
-        this.isConnectionOk = response.data.result;
-        this.networkConnectionResult = this.isConnectionOk ? 'Success, app will restart shortly' : 'Connection failed';
+      try {
+        const payload = { licenseKey: this.licenseKey };
+        await axios.post(`http://${location.host}/api/v1/license/validate`, payload);
+        this.isLicenseValid = true;
       } catch (e) {
-        console.error(e);
+        console.warn(e);
+        this.isLicenseValid = false;
       }
     },
   },
