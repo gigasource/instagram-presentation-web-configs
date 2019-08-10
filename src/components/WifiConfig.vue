@@ -60,14 +60,17 @@ export default {
     },
     async connectToNetwork() {
       try {
+        this.isConnectionOk = true;
+        this.networkConnectionResult = 'Attempting connection...';
+
         const payload = {
           ssid: this.wifis[this.selectedWifiIndex],
           passphrase: this.password,
         };
-        const response = await axios.post(`http://${location.host}api/v1/wifi/connect`, payload);
+        const response = await axios.post(`http://${location.host}/api/v1/wifi/connect`, payload);
 
         this.isConnectionOk = response.data.result;
-        this.networkConnectionResult = this.isConnectionOk ? 'Success, app will restart shortly' : 'Connection failed';
+        this.networkConnectionResult = this.isConnectionOk ? 'Success, app will restart shortly' : 'Connection failed, check your password';
       } catch (e) {
         console.error(e);
       }

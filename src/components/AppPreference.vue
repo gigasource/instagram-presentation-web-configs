@@ -264,8 +264,6 @@ export default {
       }
     },
     async validateKey() {
-      this.isLicenseSubmitted = true;
-
       try {
         const payload = { licenseKey: this.licenseKey };
         await axios.post(`http://${location.host}/api/v1/license/validate`, payload);
@@ -274,6 +272,7 @@ export default {
         console.warn(e);
         this.isLicenseValid = false;
       }
+      this.isLicenseSubmitted = true;
     },
   },
   computed: {
