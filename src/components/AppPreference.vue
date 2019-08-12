@@ -7,8 +7,10 @@
           :error="!isInstagramSourceValid"
           :error-messages="instagramSourceUrlErrorMsg"
           @change="validateInstagramSource"
+          @focus="setBaseInstagramUrl"
           v-model="instagramSourceUrl"
-          label="Instagram source URL"/>
+          label="Instagram source URL"
+          hint="Example: https://www.instagram.com/adidas"/>
       </v-flex>
 
       <h3 class="indigo--text">Presentation configurations</h3>
@@ -110,7 +112,9 @@
       </v-flex>
 
       <template v-if="!isLicenseValid">
-        <h3 class="indigo--text">License configurations (Your key id is {{licenseKeyId}})</h3>
+        <v-flex xs12>
+          <h3 class="indigo--text">License configurations (Your key id is {{licenseKeyId}})</h3>
+        </v-flex>
         <v-flex xs9>
           <v-text-field
             class="pr-3"
@@ -273,6 +277,11 @@ export default {
         this.isLicenseValid = false;
       }
       this.isLicenseSubmitted = true;
+    },
+    setBaseInstagramUrl() {
+      if (!this.instagramSourceUrl.startsWith('https://www.instagram.com/')) {
+        this.instagramSourceUrl = 'https://www.instagram.com/';
+      }
     },
   },
   computed: {

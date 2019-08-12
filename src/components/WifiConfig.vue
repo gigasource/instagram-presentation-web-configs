@@ -21,8 +21,9 @@
           v-model="password"
           label="Enter password"/>
       </v-flex>
-      <v-flex xs12 mt-6 v-if="selectedWifiIndex !== null">
-        <v-btn color="primary mr-2" large @click="connectToNetwork">Connect</v-btn>
+      <v-flex xs12 mt-6 >
+        <v-btn v-if="selectedWifiIndex !== null" color="primary mr-2"
+               large @click="connectToNetwork">Connect</v-btn>
         <v-btn color="success" large @click="getAvailableWifis">Scan</v-btn>
       </v-flex>
       <v-flex xs12>
