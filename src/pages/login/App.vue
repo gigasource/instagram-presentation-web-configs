@@ -1,7 +1,8 @@
 <template>
   <v-app>
-    <v-content>
-      <Login v-if="!isAuthorized"/>
+    <v-content class="root-container">
+<!--      <Login v-if="!isAuthorized"/>-->
+      <Login/>
     </v-content>
   </v-app>
 </template>
@@ -29,3 +30,11 @@ export default {
   },
 };
 </script>
+
+<style scoped lang="sass">
+  .root-container
+    background-image: url('../../assets/login-background.png')
+    background-repeat: no-repeat
+    -webkit-background-size: cover
+    background-size: cover
+</style>

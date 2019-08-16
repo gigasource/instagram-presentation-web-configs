@@ -1,150 +1,183 @@
 <template>
   <v-container>
-    <v-layout wrap>
-      <h3 class="indigo--text">Instagram configurations</h3>
-      <v-flex xs12>
-        <v-text-field
-          :error="!isInstagramSourceValid"
-          :error-messages="instagramSourceUrlErrorMsg"
-          @change="validateInstagramSource"
-          @focus="setBaseInstagramUrl"
-          v-model="instagramSourceUrl"
-          label="Instagram source URL"
-          hint="Example: https://www.instagram.com/adidas"/>
-      </v-flex>
-
-      <h3 class="indigo--text">Presentation configurations</h3>
-      <v-flex xs12>
-        <v-text-field
-          type="number"
-          :rules="numberOfPostRules"
-          v-model="numberOfPostsToDisplay"
-          label="Number of posts to display (Use 0 for all posts)"/>
-      </v-flex>
-
-      <v-flex>
-        <v-text-field
-          v-model="excludedHashtags"
-          label="Excluded Hashtags, separated by commas"/>
-      </v-flex>
-
-      <v-flex xs12>
-        <h3 class="indigo--text">Size configurations</h3>
-      </v-flex>
-      <v-flex xs6>
-        <v-text-field
-          type="number"
-          class="pr-3"
-          v-model="profilePicWidth"
-          label="Profile image width"/>
-      </v-flex>
-      <v-flex xs6>
-        <v-text-field
-          type="number"
-          v-model="profilePicHeight"
-          label="Profile image height"/>
-      </v-flex>
-
-      <v-flex xs6>
-        <v-text-field
-          type="number"
-          class="pr-3"
-          v-model="imgMainWidth"
-          label="Main image width"/>
-      </v-flex>
-      <v-flex xs6>
-        <v-text-field
-          type="number"
-          v-model="imgMainHeight"
-          label="Main image height"/>
-      </v-flex>
-
-      <v-flex xs6>
-        <v-text-field
-          type="number"
-          class="pr-3"
-          v-model="likeTextSize"
-          label="Likes text size"/>
-      </v-flex>
-
-      <v-flex xs6>
-        <v-text-field
-          type="number"
-          v-model="commentTextSize"
-          label="Comments text size"/>
-      </v-flex>
-
-      <v-flex xs6>
-        <v-text-field
-          type="number"
-          class="pr-3"
-          v-model="descriptionTextSize"
-          label="Description text size"/>
-      </v-flex>
-      <v-flex xs6/>
-
-      <v-flex xs12>
-        <v-text-field
-          type="number"
-          v-model="presentInterval"
-          label="Each image is shown for: (in ms, 1000ms = 1 second)"/>
-      </v-flex>
-
-      <h3 class="indigo--text">Visibility configurations</h3>
-      <v-flex xs12>
-        <v-switch v-model="isProfilePicDisplayed" :label="profilePicMsg"/>
-      </v-flex>
-
-      <v-flex xs12>
-        <v-switch v-model="isUsernameDisplayed" :label="usernameMsg"/>
-      </v-flex>
-
-      <v-flex xs12>
-        <v-switch v-model="isLikesDisplayed" :label="likeMsg"/>
-      </v-flex>
-
-      <v-flex xs12>
-        <v-switch v-model="isCommentsDisplayed" :label="commentMsg"/>
-      </v-flex>
-
-      <v-flex xs12>
-        <v-switch v-model="isDescriptionDisplayed" :label="descriptionMsg"/>
-      </v-flex>
-
-      <template v-if="!isLicenseValid">
+    <v-form
+      ref="form"
+      v-model="formValid">
+      <v-layout wrap>
+        <h3 class="indigo--text">Instagram configurations</h3>
         <v-flex xs12>
-          <h3 class="indigo--text">License configurations (Your key id is {{licenseKeyId}})</h3>
-        </v-flex>
-        <v-flex xs9>
           <v-text-field
-            class="pr-3"
-            v-model="licenseKey"
-            label="Enter license key"/>
+            :error="!isInstagramSourceValid"
+            :error-messages="instagramSourceUrlErrorMsg"
+            @focusout="validateInstagramSource"
+            @focus="setBaseInstagramUrl"
+            v-model="instagramSourceUrl"
+            label="Instagram source URL"
+            hint="Example: https://www.instagram.com/adidas"
+            required/>
         </v-flex>
-        <v-flex xs3>
-          <v-layout align-center fill-height>
-            <v-btn class="white--text" color="green"
-                   :disabled="isLicenseSubmitted && isLicenseValid"
-                   @click="validateKey">Submit
+
+        <h3 class="indigo--text">Presentation configurations</h3>
+        <v-flex xs12>
+          <v-text-field
+            type="number"
+            :rules="numberOfPostRules"
+            v-model="numberOfPostsToDisplay"
+            label="Number of posts to display (Use 0 for all posts)"
+            required/>
+        </v-flex>
+
+        <v-flex>
+          <v-text-field
+            v-model="excludedHashtags"
+            label="Excluded Hashtags, separated by commas"
+            hint="Example: #new, #cool, #abc"/>
+        </v-flex>
+
+        <v-flex xs12>
+          <h3 class="indigo--text">Size configurations</h3>
+        </v-flex>
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            class="pr-3"
+            :rules="widthRules"
+            v-model="profilePicWidth"
+            label="Profile image width"
+            required/>
+        </v-flex>
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            :rules="heightRules"
+            v-model="profilePicHeight"
+            label="Profile image height"
+            required/>
+        </v-flex>
+
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            class="pr-3"
+            :rules="widthRules"
+            v-model="imgMainWidth"
+            label="Main image width"
+            required/>
+        </v-flex>
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            :rules="heightRules"
+            v-model="imgMainHeight"
+            label="Main image height"
+            required/>
+        </v-flex>
+
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            class="pr-3"
+            :rules="sizeRules"
+            v-model="usernameTextSize"
+            label="Username text size"
+            required/>
+        </v-flex>
+
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            :rules="sizeRules"
+            v-model="likeTextSize"
+            label="Likes text size"
+            required/>
+        </v-flex>
+
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            class="pr-3"
+            :rules="sizeRules"
+            v-model="commentTextSize"
+            label="Comments text size"
+            required/>
+        </v-flex>
+
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            :rules="sizeRules"
+            v-model="captionTextSize"
+            label="Caption text size"
+            required/>
+        </v-flex>
+        <v-flex xs6/>
+
+        <v-flex xs12>
+          <v-text-field
+            type="number"
+            :rules="intervalRules"
+            v-model="presentInterval"
+            label="Each image is shown for: (in ms, 1000ms = 1 second)"/>
+        </v-flex>
+
+        <h3 class="indigo--text">Visibility configurations</h3>
+        <v-flex xs12>
+          <v-switch v-model="isProfilePicDisplayed" :label="profilePicMsg"/>
+        </v-flex>
+
+        <v-flex xs12>
+          <v-switch v-model="isUsernameDisplayed" :label="usernameMsg"/>
+        </v-flex>
+
+        <v-flex xs12>
+          <v-switch v-model="isLikesDisplayed" :label="likeMsg"/>
+        </v-flex>
+
+        <v-flex xs12>
+          <v-switch v-model="isCommentsDisplayed" :label="commentMsg"/>
+        </v-flex>
+
+        <v-flex xs12>
+          <v-switch v-model="isCaptionDisplayed" :label="captionMsg"/>
+        </v-flex>
+
+        <template v-if="!isLicenseValid">
+          <v-flex xs12>
+            <h3 class="indigo--text">License configurations (Your key id is {{licenseKeyId}})</h3>
+          </v-flex>
+          <v-flex xs9>
+            <v-text-field
+              class="pr-3"
+              v-model="licenseKey"
+              label="Enter license key"/>
+          </v-flex>
+          <v-flex xs3>
+            <v-layout align-center fill-height>
+              <v-btn class="white--text" color="green"
+                     :disabled="isLicenseSubmitted && isLicenseValid"
+                     @click="validateKey">Submit
+              </v-btn>
+            </v-layout>
+          </v-flex>
+        </template>
+
+        <v-flex xs12>
+          <h6 class="green--text" v-if="isLicenseSubmitted && isLicenseValid">
+            Success! please click "Save" to refresh the application</h6>
+          <h6 class="red--text" v-else-if="isLicenseSubmitted && !isLicenseValid">
+            Invalid license key</h6>
+        </v-flex>
+        <!--Buttons at the bottom-->
+        <v-flex xs12 mt-12>
+          <v-layout justify-center>
+            <v-btn class="mr-2" color="primary" :disabled="!formValid"
+                   @click="saveAppPreference" large>Save
             </v-btn>
+            <v-btn color="error" @click="getAppPreferences" large dark>Reset</v-btn>
           </v-layout>
         </v-flex>
-      </template>
-
-      <v-flex xs12>
-        <h6 class="green--text" v-if="isLicenseSubmitted && isLicenseValid">
-          Success! please click "Save" to refresh the application</h6>
-        <h6 class="red--text" v-else-if="isLicenseSubmitted && !isLicenseValid">
-          Invalid license key</h6>
-      </v-flex>
-      <!--Buttons at the bottom-->
-      <v-flex xs12 mt-12>
-        <v-layout justify-center>
-          <v-btn class="mr-2" color="primary" @click="saveAppPreference" large>Save</v-btn>
-          <v-btn color="error" @click="getAppPreferences" large dark>Reset</v-btn>
-        </v-layout>
-      </v-flex>
-    </v-layout>
+      </v-layout>
+    </v-form>
   </v-container>
 </template>
 
@@ -162,8 +195,9 @@ export default {
       isUsernameDisplayed: false,
       isLikesDisplayed: false,
       isCommentsDisplayed: false,
-      isDescriptionDisplayed: false,
+      isCaptionDisplayed: false,
       isInstagramSourceValid: false,
+      formValid: false,
       // License variables
       licenseKey: '',
       licenseKeyId: '',
@@ -179,12 +213,28 @@ export default {
       imgMainHeight: 0,
       likeTextSize: 0,
       commentTextSize: 0,
-      descriptionTextSize: 0,
+      captionTextSize: 0,
       presentInterval: 0,
       // Validation rules
       numberOfPostRules: [
         v => /^-{0,1}\d+$/.test(v) || 'Number of post must be an integer',
-        v => parseInt(v, 10) >= 0 || 'Number of post must >= 0',
+        v => parseInt(v, 10) >= 0 || 'Minimum number is 0',
+      ],
+      widthRules: [
+        v => /^-{0,1}\d+$/.test(v) || 'Width must be an integer',
+        v => parseInt(v, 10) >= 0 || 'Minimum width is 0',
+      ],
+      heightRules: [
+        v => /^-{0,1}\d+$/.test(v) || 'Height must be an integer',
+        v => parseInt(v, 10) >= 0 || 'Minimum height is 0',
+      ],
+      sizeRules: [
+        v => /^-{0,1}\d+$/.test(v) || 'Size must be an integer',
+        v => parseInt(v, 10) >= 0 || 'Minimum size is 0',
+      ],
+      intervalRules: [
+        v => /^-{0,1}\d+$/.test(v) || 'Interval must be an integer',
+        v => parseInt(v, 10) >= 5000 || 'Minimum interval is 5000',
       ],
     };
   },
@@ -192,6 +242,7 @@ export default {
     this.getAppPreferences();
     this.validateInstagramSource();
     this.getLicenseKeyId();
+    this.isValidated();
   },
   methods: {
     async getAppPreferences() {
@@ -206,16 +257,16 @@ export default {
         this.isUsernameDisplayed = appPreferences.isUsernameDisplayed;
         this.isLikesDisplayed = appPreferences.isLikesDisplayed;
         this.isCommentsDisplayed = appPreferences.isCommentsDisplayed;
-        this.isDescriptionDisplayed = appPreferences.isDescriptionDisplayed;
+        this.isCaptionDisplayed = appPreferences.isCaptionDisplayed;
         // Size variables
         this.profilePicWidth = appPreferences.profilePicWidth;
         this.profilePicHeight = appPreferences.profilePicHeight;
-        this.usernameTextSize = appPreferences.usernameTextSize;
         this.imgMainWidth = appPreferences.imgMainWidth;
         this.imgMainHeight = appPreferences.imgMainHeight;
+        this.usernameTextSize = appPreferences.usernameTextSize;
         this.likeTextSize = appPreferences.likeTextSize;
         this.commentTextSize = appPreferences.commentTextSize;
-        this.descriptionTextSize = appPreferences.descriptionTextSize;
+        this.captionTextSize = appPreferences.captionTextSize;
         this.presentInterval = appPreferences.presentInterval;
       } catch (e) {
         console.error(e);
@@ -231,7 +282,7 @@ export default {
           isUsernameDisplayed: this.isUsernameDisplayed,
           isLikesDisplayed: this.isLikesDisplayed,
           isCommentsDisplayed: this.isCommentsDisplayed,
-          isDescriptionDisplayed: this.isDescriptionDisplayed,
+          isCaptionDisplayed: this.isCaptionDisplayed,
           // Size variables
           profilePicWidth: this.profilePicWidth,
           profilePicHeight: this.profilePicHeight,
@@ -240,7 +291,7 @@ export default {
           imgMainHeight: this.imgMainHeight,
           likeTextSize: this.likeTextSize,
           commentTextSize: this.commentTextSize,
-          descriptionTextSize: this.descriptionTextSize,
+          captionTextSize: this.captionTextSize,
           presentInterval: this.presentInterval,
         };
 
@@ -251,9 +302,17 @@ export default {
     },
     async validateInstagramSource() {
       try {
-        await axios.get(this.instagramSourceUrl);
-        this.instagramSourceUrlErrorMsg = '';
-        this.isInstagramSourceValid = true;
+        if ((!this.instagramSourceUrl.toLowerCase().startsWith('https://www.instagram.com/')
+            && !this.instagramSourceUrl.toLowerCase().startsWith('https://instagram.com/')
+            && !this.instagramSourceUrl.toLowerCase().startsWith('www.instagram.com/')
+            && !this.instagramSourceUrl.toLowerCase().startsWith('instagram.com/'))
+            || this.instagramSourceUrl.split('instagram.com/')[1].trim().length === 0) {
+          throw new Error();
+        } else {
+          await axios.get(this.instagramSourceUrl);
+          this.instagramSourceUrlErrorMsg = '';
+          this.isInstagramSourceValid = true;
+        }
       } catch (e) {
         this.instagramSourceUrlErrorMsg = 'Please specify a valid Instagram user URL';
         this.isInstagramSourceValid = false;
@@ -278,7 +337,17 @@ export default {
       }
       this.isLicenseSubmitted = true;
     },
+    async isValidated() {
+      try {
+        const { data: responseData } = axios.get(`http://${location.host}/api/v1/license/is-validated`);
+        this.isLicenseValid = responseData.validated;
+      } catch (e) {
+        console.warn(e);
+        this.isLicenseValid = true;
+      }
+    },
     setBaseInstagramUrl() {
+      this.instagramSourceUrlErrorMsg = '';
       if (!this.instagramSourceUrl.startsWith('https://www.instagram.com/')) {
         this.instagramSourceUrl = 'https://www.instagram.com/';
       }
@@ -297,8 +366,8 @@ export default {
     commentMsg() {
       return this.isCommentsDisplayed ? 'Display number of comments' : 'Do not display number of comments';
     },
-    descriptionMsg() {
-      return this.isDescriptionDisplayed ? 'Display post description' : 'Do not display post description';
+    captionMsg() {
+      return this.isCaptionDisplayed ? 'Display post caption' : 'Do not display post caption';
     },
   },
 };
