@@ -1,8 +1,7 @@
 <template>
   <v-app>
     <v-content class="root-container">
-<!--      <Login v-if="!isAuthorized"/>-->
-      <Login/>
+      <Login v-if="!isAuthorized"/>
     </v-content>
   </v-app>
 </template>
