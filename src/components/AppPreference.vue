@@ -240,7 +240,6 @@ export default {
   },
   created() {
     this.getAppPreferences();
-    this.validateInstagramSource();
     this.getLicenseKeyId();
     this.isValidated();
   },
@@ -268,6 +267,8 @@ export default {
         this.commentTextSize = appPreferences.commentTextSize;
         this.captionTextSize = appPreferences.captionTextSize;
         this.presentInterval = appPreferences.presentInterval;
+
+        this.validateInstagramSource();
       } catch (e) {
         console.error(e);
       }
