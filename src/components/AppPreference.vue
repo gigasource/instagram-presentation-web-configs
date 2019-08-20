@@ -110,14 +110,23 @@
             label="Caption text size"
             required/>
         </v-flex>
-        <v-flex xs6/>
 
-        <v-flex xs12>
+        <v-flex xs6>
           <v-text-field
             type="number"
-            :rules="intervalRules"
+            class="pr-3"
+            :rules="presentIntervalRules"
             v-model="presentInterval"
-            label="Each image is shown for: (in ms, 1000ms = 1 second)"/>
+            label="Each image is shown for: (in milliseconds)"
+            required/>
+        </v-flex>
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            :rules="refreshIntervalRules"
+            v-model="refreshInterval"
+            label="Images are refreshed every: (in minutes)"
+            required/>
         </v-flex>
 
         <h3 class="indigo--text">Visibility configurations</h3>
@@ -214,7 +223,9 @@ export default {
       likeTextSize: 0,
       commentTextSize: 0,
       captionTextSize: 0,
+      // Slideshow variables
       presentInterval: 0,
+      refreshInterval: 0,
       // Validation rules
       numberOfPostRules: [
         v => /^-{0,1}\d+$/.test(v) || 'Number of post must be an integer',
@@ -232,9 +243,13 @@ export default {
         v => /^-{0,1}\d+$/.test(v) || 'Size must be an integer',
         v => parseInt(v, 10) >= 0 || 'Minimum size is 0',
       ],
-      intervalRules: [
+      presentIntervalRules: [
         v => /^-{0,1}\d+$/.test(v) || 'Interval must be an integer',
-        v => parseInt(v, 10) >= 5000 || 'Minimum interval is 5000',
+        v => parseInt(v, 10) >= 5000 || 'Minimum interval is 5000 milliseconds',
+      ],
+      refreshIntervalRules: [
+        v => /^-{0,1}\d+$/.test(v) || 'Interval must be an integer',
+        v => parseInt(v, 10) >= 1 || 'Minimum interval is 1 minutes',
       ],
     };
   },
@@ -266,7 +281,9 @@ export default {
         this.likeTextSize = appPreferences.likeTextSize;
         this.commentTextSize = appPreferences.commentTextSize;
         this.captionTextSize = appPreferences.captionTextSize;
+        // Slideshow variables
         this.presentInterval = appPreferences.presentInterval;
+        this.refreshInterval = appPreferences.refreshInterval;
 
         this.validateInstagramSource();
       } catch (e) {
@@ -293,7 +310,9 @@ export default {
           likeTextSize: this.likeTextSize,
           commentTextSize: this.commentTextSize,
           captionTextSize: this.captionTextSize,
+          // Slideshow variables
           presentInterval: this.presentInterval,
+          refreshInterval: this.refreshInterval,
         };
 
         await axios.post(`http://${location.host}/api/v1/preference`, payload);
