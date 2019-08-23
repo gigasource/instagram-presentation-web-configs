@@ -4,37 +4,64 @@
       ref="form"
       v-model="formValid">
       <v-layout wrap>
-        <h3 class="indigo--text">Instagram configurations</h3>
-        <v-flex xs12>
-          <v-text-field
-            :error="!isInstagramSourceValid"
-            :error-messages="instagramSourceUrlErrorMsg"
-            @focusout="validateInstagramSource"
-            @focus="setBaseInstagramUrl"
-            v-model="instagramSourceUrl"
-            label="Instagram source URL"
-            hint="Example: https://www.instagram.com/adidas"
-            required/>
+        <v-flex xs12 md7>
+          <h3 class="indigo--text">Instagram configurations</h3>
+          <v-flex xs12>
+            <v-text-field
+              :error="!isInstagramSourceTagsValid"
+              :rules="hashtagsRules"
+              v-model="instagramSourceTags"
+              @input="watchHashtagInput"
+              label="Instagram source hashtags"
+              hint="Separated by commas, example: #fashion, #sport, #art"
+              required/>
+          </v-flex>
+
+          <v-flex xs12>
+            <v-text-field
+              :error="!isInstagramSourceValid"
+              :error-messages="instagramSourceUrlErrorMsg"
+              @focusout="validateInstagramSource"
+              @focus="setBaseInstagramUrl"
+              v-model="instagramSourceUrl"
+              label="Instagram source URL"
+              hint="Example: https://www.instagram.com/adidas"
+              required/>
+          </v-flex>
         </v-flex>
 
-        <h3 class="indigo--text">Presentation configurations</h3>
-        <v-flex xs12>
+        <v-flex xs12 md5>
+          <v-layout fill-height align-center :mx-12="$vuetify.breakpoint.mdAndUp"
+                    :justify-center="$vuetify.breakpoint.mdAndUp">
+           <div v-if="this.isInstagramSourceTagsValid && this.isInstagramSourceValid"
+             class="source-result green--text">
+             {{sourceConfigMsg}}
+           </div>
+            <div v-else class="source-result red--text">
+              Invalid source configs, please check your input
+            </div>
+          </v-layout>
+        </v-flex>
+
+        <v-flex xs12 mt-6>
+          <h3 class="indigo--text" >Presentation configurations</h3>
           <v-text-field
             type="number"
             :rules="numberOfPostRules"
             v-model="numberOfPostsToDisplay"
-            label="Number of posts to display (Use 0 for all posts)"
+            label="Number of posts to display"
             required/>
         </v-flex>
 
         <v-flex>
           <v-text-field
+            :rules="excludedHashtagsRules"
             v-model="excludedHashtags"
             label="Excluded Hashtags, separated by commas"
             hint="Example: #new, #cool, #abc"/>
         </v-flex>
 
-        <v-flex xs12>
+        <v-flex xs12 mt-6>
           <h3 class="indigo--text">Size configurations</h3>
         </v-flex>
         <v-flex xs6>
@@ -129,7 +156,9 @@
             required/>
         </v-flex>
 
-        <h3 class="indigo--text">Visibility configurations</h3>
+        <v-flex xs12 mt-6>
+          <h3 class="indigo--text">Visibility configurations</h3>
+        </v-flex>
         <v-flex xs12>
           <v-switch v-model="isProfilePicDisplayed" :label="profilePicMsg"/>
         </v-flex>
@@ -192,12 +221,14 @@
 
 <script>
 import axios from 'axios';
+import _ from 'lodash';
 
 export default {
   data() {
     return {
       // Data variables
       instagramSourceUrl: '',
+      instagramSourceTags: '',
       numberOfPostsToDisplay: 0,
       excludedHashtags: '',
       isProfilePicDisplayed: false,
@@ -206,6 +237,7 @@ export default {
       isCommentsDisplayed: false,
       isCaptionDisplayed: false,
       isInstagramSourceValid: false,
+      isInstagramSourceTagsValid: true,
       formValid: false,
       // License variables
       licenseKey: '',
@@ -229,7 +261,8 @@ export default {
       // Validation rules
       numberOfPostRules: [
         v => /^-{0,1}\d+$/.test(v) || 'Number of post must be an integer',
-        v => parseInt(v, 10) >= 0 || 'Minimum number is 0',
+        v => parseInt(v, 10) > 0 || 'Minimum number is 1',
+        v => parseInt(v, 10) <= 100 || 'Maximum number is 100',
       ],
       widthRules: [
         v => /^-{0,1}\d+$/.test(v) || 'Width must be an integer',
@@ -259,12 +292,16 @@ export default {
     this.isValidated();
   },
   methods: {
+    isStringBlank(s) {
+      return !s || s.trim().length === 0;
+    },
     async getAppPreferences() {
       try {
         const { data: appPreferences } = await axios.get(`http://${location.host}/api/v1/preference`);
 
         // Data variables
         this.instagramSourceUrl = appPreferences.instagramSourceUrl;
+        this.instagramSourceTags = appPreferences.instagramSourceTags;
         this.numberOfPostsToDisplay = appPreferences.numberOfPostsToDisplay;
         this.excludedHashtags = appPreferences.excludedHashtags;
         this.isProfilePicDisplayed = appPreferences.isProfilePicDisplayed;
@@ -294,6 +331,7 @@ export default {
       try {
         const payload = {
           instagramSourceUrl: this.instagramSourceUrl,
+          instagramSourceTags: this.instagramSourceTags,
           numberOfPostsToDisplay: this.numberOfPostsToDisplay,
           excludedHashtags: this.excludedHashtags,
           isProfilePicDisplayed: this.isProfilePicDisplayed,
@@ -321,6 +359,13 @@ export default {
       }
     },
     async validateInstagramSource() {
+      if (this.isStringBlank(this.instagramSourceUrl)
+        && !this.isStringBlank(this.instagramSourceTags)) {
+        // if url is empty but tags are not -> fetch posts by hashtags -> allowed, no error
+        this.instagramSourceUrlErrorMsg = '';
+        this.isInstagramSourceValid = true;
+        return;
+      }
       try {
         if ((!this.instagramSourceUrl.toLowerCase().startsWith('https://www.instagram.com/')
             && !this.instagramSourceUrl.toLowerCase().startsWith('https://instagram.com/')
@@ -337,6 +382,8 @@ export default {
         this.instagramSourceUrlErrorMsg = 'Please specify a valid Instagram user URL';
         this.isInstagramSourceValid = false;
       }
+      console.log('abc');
+      this.$refs.form.validate();
     },
     async getLicenseKeyId() {
       try {
@@ -372,6 +419,20 @@ export default {
         this.instagramSourceUrl = 'https://www.instagram.com/';
       }
     },
+    watchHashtagInput() {
+      // Skip check if source URL is not empty
+      if (!this.isStringBlank(this.instagramSourceUrl)) {
+        return;
+      }
+
+      if (!this.isStringBlank(this.instagramSourceTags)) {
+        this.isInstagramSourceValid = true;
+        this.instagramSourceUrlErrorMsg = '';
+      } else {
+        this.isInstagramSourceValid = false;
+        this.instagramSourceUrlErrorMsg = 'Please specify a valid Instagram user URL';
+      }
+    },
   },
   computed: {
     profilePicMsg() {
@@ -389,6 +450,82 @@ export default {
     captionMsg() {
       return this.isCaptionDisplayed ? 'Display post caption' : 'Do not display post caption';
     },
+    instagramUser() {
+      let user = '';
+      if (!this.isStringBlank(this.instagramSourceUrl)) {
+        [, user] = this.instagramSourceUrl.split('www.instagram.com/');
+      }
+      return user;
+    },
+    sourceConfigMsg() {
+      let msg = '';
+      if (!this.isStringBlank(this.instagramUser)) {
+        msg = `Result: Get posts from ${this.instagramUser}`;
+
+        if (!this.isStringBlank(this.instagramSourceTags)) {
+          msg = `${msg} with hashtags ${this.instagramSourceTags}`;
+        }
+      } else if (!this.isStringBlank(this.instagramSourceTags)) {
+        msg = `Result: Get posts with hashtags ${this.instagramSourceTags}`;
+      }
+      return msg;
+    },
+    hashtagsRules() {
+      const rules = [];
+      rules.push(v => (!this.isStringBlank(v) || !this.isStringBlank(this.instagramSourceUrl))
+        || 'Please specify source URL or source hashtags');
+
+      // If source URL is empty -> only 1 hashtag is allowed
+      if (this.isStringBlank(this.instagramSourceUrl)) {
+        rules.push(v => v.split(',').length <= 1 || 'Only 1 hashtag is allowed if source URL is empty');
+      }
+
+      // Else -> multiple hashtags are allowed
+      rules.push((v) => {
+        const hashtags = v.split(',');
+        for (let i = 0; i < hashtags.length; i += 1) {
+          const hashtag = hashtags[i].trim();
+          if (!this.isStringBlank(hashtag) && !hashtag.startsWith('#')) {
+            return 'Hashtags must start with #';
+          }
+
+          const hashtagContent = hashtags[i].trim().substring(1);
+          if (!this.isStringBlank(hashtagContent) && !(/^[0-9a-zA-Z]+$/.test(hashtagContent))) {
+            return 'Hashtags can only caontain letters and number';
+          }
+        }
+        return true;
+      });
+
+      return rules;
+    },
+    excludedHashtagsRules() {
+      const rules = [];
+      const excludedHashtags = this.excludedHashtags.replace(/\s/g, '').toLowerCase().split(',');
+      const requiredHashtags = this.instagramSourceTags.replace(/\s/g, '').toLowerCase().split(',');
+
+      rules.push(() => {
+        if (!this.isStringBlank(this.excludedHashtags)
+          && !this.isStringBlank(this.instagramSourceTags)
+          && _.intersection(excludedHashtags, requiredHashtags).length > 0) {
+          return 'Excluded hashtags conflict with source hashtags';
+        }
+        return true;
+      });
+
+      return rules;
+    },
   },
 };
 </script>
+
+<style scoped lang="sass">
+    .source-result
+      @media screen and (min-width: 320px)
+        font-size: 0.9em
+        margin-top: 1em
+        font-weight: bold
+
+      @media screen and (min-width: 1025px)
+        font-size: 1.4em
+</style>
