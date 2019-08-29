@@ -1,46 +1,53 @@
 <template>
-  <v-container>
+  <v-container class="main-container">
     <v-form
       ref="form"
       v-model="formValid">
       <v-layout wrap>
-        <v-flex xs12 md7>
-          <h3 class="indigo--text">Instagram configurations</h3>
-          <v-flex xs12>
-            <v-text-field
-              :error="!isInstagramSourceTagsValid"
-              :rules="hashtagsRules"
-              v-model="instagramSourceTags"
-              @input="watchHashtagInput"
-              label="Instagram source hashtags"
-              hint="Separated by commas, example: #fashion, #sport, #art"
-              required/>
+          <v-flex xs12 md6>
+            <v-layout align-center fill-height>
+              <h3 class="indigo--text">Instagram configurations</h3>
+            </v-layout>
           </v-flex>
-
-          <v-flex xs12>
+          <v-flex xs12 md6>
+            <v-radio-group v-model="sourceConfigMode" row>
+              <v-radio
+                label="Get posts by URL"
+                :value="1"
+                @change="changeMode"
+              ></v-radio>
+              <v-radio
+                label="Get posts by hashtag"
+                :value="2"
+                @change="changeMode"
+              ></v-radio>
+            </v-radio-group>
+          </v-flex>
+        <v-flex xs12>
+          <v-flex xs12 v-if="sourceConfigMode === MODE_URL">
             <v-text-field
               :error="!isInstagramSourceValid"
               :error-messages="instagramSourceUrlErrorMsg"
-              @focusout="validateInstagramSource"
+              @focusout="validateInstagramSourceUrl"
               @focus="setBaseInstagramUrl"
               v-model="instagramSourceUrl"
               label="Instagram source URL"
               hint="Example: https://www.instagram.com/adidas"
               required/>
           </v-flex>
-        </v-flex>
 
-        <v-flex xs12 md5>
-          <v-layout fill-height align-center :mx-12="$vuetify.breakpoint.mdAndUp"
-                    :justify-center="$vuetify.breakpoint.mdAndUp">
-           <div v-if="this.isInstagramSourceTagsValid && this.isInstagramSourceValid"
-             class="source-result green--text">
-             {{sourceConfigMsg}}
-           </div>
-            <div v-else class="source-result red--text">
-              Invalid source configs, please check your input
-            </div>
-          </v-layout>
+          <v-flex xs12>
+            <v-text-field
+              :error="!isInstagramSourceTagsValid"
+              :rules="hashtagsRules"
+              v-model="instagramSourceTags"
+              @input="watchHashtagInput"
+              :label="sourceConfigMode === MODE_URL ? 'Get posts with these tags only'
+              : 'Instagram source hashtags'"
+              :hint="sourceConfigMode === MODE_URL ? 'Separated by commas, example: #fashion, #sport, #art'
+              : 'Only 1 hashtag is allowed, example: #sport'"
+              required/>
+          </v-flex>
         </v-flex>
 
         <v-flex xs12 mt-6>
@@ -239,6 +246,9 @@ export default {
       isInstagramSourceValid: false,
       isInstagramSourceTagsValid: true,
       formValid: false,
+      sourceConfigMode: 1,
+      MODE_URL: 1,
+      MODE_HASHTAG: 2,
       // License variables
       licenseKey: '',
       licenseKeyId: '',
@@ -322,7 +332,7 @@ export default {
         this.presentInterval = appPreferences.presentInterval;
         this.refreshInterval = appPreferences.refreshInterval;
 
-        this.validateInstagramSource();
+        this.validateInstagramSourceUrl();
       } catch (e) {
         console.error(e);
       }
@@ -358,14 +368,9 @@ export default {
         console.error(e);
       }
     },
-    async validateInstagramSource() {
-      if (this.isStringBlank(this.instagramSourceUrl)
-        && !this.isStringBlank(this.instagramSourceTags)) {
-        // if url is empty but tags are not -> fetch posts by hashtags -> allowed, no error
-        this.instagramSourceUrlErrorMsg = '';
-        this.isInstagramSourceValid = true;
-        return;
-      }
+    async validateInstagramSourceUrl() {
+      if (this.sourceConfigMode === this.MODE_HASHTAG) return;
+
       try {
         if ((!this.instagramSourceUrl.toLowerCase().startsWith('https://www.instagram.com/')
             && !this.instagramSourceUrl.toLowerCase().startsWith('https://instagram.com/')
@@ -375,6 +380,10 @@ export default {
           throw new Error();
         } else {
           await axios.get(this.instagramSourceUrl);
+
+          // Fix a bug where changing mode too fast can cause incorrect validation
+          if (this.isStringBlank(this.instagramSourceUrl)) throw new Error();
+
           this.instagramSourceUrlErrorMsg = '';
           this.isInstagramSourceValid = true;
         }
@@ -382,7 +391,6 @@ export default {
         this.instagramSourceUrlErrorMsg = 'Please specify a valid Instagram user URL';
         this.isInstagramSourceValid = false;
       }
-      console.log('abc');
       this.$refs.form.validate();
     },
     async getLicenseKeyId() {
@@ -420,18 +428,23 @@ export default {
       }
     },
     watchHashtagInput() {
-      // Skip check if source URL is not empty
-      if (!this.isStringBlank(this.instagramSourceUrl)) {
+      // Skip check if mode == get by hashtags
+      if (this.sourceConfigMode === this.MODE_HASHTAG) {
         return;
       }
 
-      if (!this.isStringBlank(this.instagramSourceTags)) {
+      if (!this.isStringBlank(this.instagramSourceUrl)) {
         this.isInstagramSourceValid = true;
         this.instagramSourceUrlErrorMsg = '';
       } else {
         this.isInstagramSourceValid = false;
         this.instagramSourceUrlErrorMsg = 'Please specify a valid Instagram user URL';
       }
+    },
+    changeMode() {
+      this.instagramSourceTags = '';
+      this.instagramSourceUrl = '';
+      this.validateInstagramSourceUrl();
     },
   },
   computed: {
@@ -450,34 +463,15 @@ export default {
     captionMsg() {
       return this.isCaptionDisplayed ? 'Display post caption' : 'Do not display post caption';
     },
-    instagramUser() {
-      let user = '';
-      if (!this.isStringBlank(this.instagramSourceUrl)) {
-        [, user] = this.instagramSourceUrl.split('www.instagram.com/');
-      }
-      return user;
-    },
-    sourceConfigMsg() {
-      let msg = '';
-      if (!this.isStringBlank(this.instagramUser)) {
-        msg = `Result: Get posts from ${this.instagramUser}`;
-
-        if (!this.isStringBlank(this.instagramSourceTags)) {
-          msg = `${msg} with hashtags ${this.instagramSourceTags}`;
-        }
-      } else if (!this.isStringBlank(this.instagramSourceTags)) {
-        msg = `Result: Get posts with hashtags ${this.instagramSourceTags}`;
-      }
-      return msg;
-    },
     hashtagsRules() {
       const rules = [];
-      rules.push(v => (!this.isStringBlank(v) || !this.isStringBlank(this.instagramSourceUrl))
-        || 'Please specify source URL or source hashtags');
 
-      // If source URL is empty -> only 1 hashtag is allowed
-      if (this.isStringBlank(this.instagramSourceUrl)) {
-        rules.push(v => v.split(',').length <= 1 || 'Only 1 hashtag is allowed if source URL is empty');
+      // If mode = get posts by hashtags -> only 1 hashtag is allowed
+      if (this.sourceConfigMode === this.MODE_HASHTAG) {
+        rules.push(v => !this.isStringBlank(v)
+          || 'Please specify a hashtag, example: #sport');
+
+        rules.push(v => v.split(',').length <= 1 || 'Only 1 hashtag is allowed');
       }
 
       // Else -> multiple hashtags are allowed
@@ -520,12 +514,19 @@ export default {
 </script>
 
 <style scoped lang="sass">
+    $screen-mobile-min-width: 320px
+    $screen-desktop-min-width: 1025px
+
     .source-result
-      @media screen and (min-width: 320px)
+      @media screen and (min-width: $screen-mobile-min-width)
         font-size: 0.9em
         margin-top: 1em
         font-weight: bold
 
-      @media screen and (min-width: 1025px)
+      @media screen and (min-width: $screen-desktop-min-width)
         font-size: 1.4em
+
+    .main-container
+      @media screen and (min-width: $screen-desktop-min-width)
+        max-width: 800px
 </style>
