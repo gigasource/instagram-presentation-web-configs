@@ -1,7 +1,8 @@
 <template>
   <v-app>
     <v-content>
-      <AppPreference v-if="isAuthorized"/>
+<!--      <AppPreference v-if="isAuthorized"/>-->
+      <AppPreference/>
     </v-content>
   </v-app>
 </template>

@@ -39,7 +39,7 @@
           <v-flex xs12>
             <v-text-field
               :error="!isInstagramSourceTagsValid"
-              :rules="hashtagsRules"
+              :rules="[...sourceHashtagsRules, ...duplicatedHashtagRule, ...hashtagInvalidCharRule]"
               v-model="instagramSourceTags"
               @input="watchHashtagInput"
               :label="sourceConfigMode === MODE_URL ? 'Get posts with these tags only'
@@ -62,8 +62,10 @@
 
         <v-flex>
           <v-text-field
-            :rules="excludedHashtagsRules"
+            :error="!isExcludedTagsValid"
+            :rules="[...duplicatedHashtagRule, ...hashtagInvalidCharRule]"
             v-model="excludedHashtags"
+            @input="watchHashtagInput"
             label="Excluded Hashtags, separated by commas"
             hint="Example: #new, #cool, #abc"/>
         </v-flex>
@@ -245,6 +247,7 @@ export default {
       isCaptionDisplayed: false,
       isInstagramSourceValid: false,
       isInstagramSourceTagsValid: true,
+      isExcludedTagsValid: true,
       formValid: false,
       sourceConfigMode: 1,
       MODE_URL: 1,
@@ -293,6 +296,23 @@ export default {
       refreshIntervalRules: [
         v => /^-{0,1}\d+$/.test(v) || 'Interval must be an integer',
         v => parseInt(v, 10) >= 1 || 'Minimum interval is 1 minutes',
+      ],
+      hashtagInvalidCharRule: [
+        (v) => {
+          const hashtags = v.split(',');
+          for (let i = 0; i < hashtags.length; i += 1) {
+            const hashtag = hashtags[i].trim();
+            if (!this.isStringBlank(hashtag) && !hashtag.startsWith('#')) {
+              return 'Hashtags must start with #';
+            }
+
+            const hashtagContent = hashtags[i].trim().substring(1);
+            if (!this.isStringBlank(hashtagContent) && !(/^[0-9a-zA-Z]+$/.test(hashtagContent))) {
+              return 'Hashtags can only caontain letters and number';
+            }
+          }
+          return true;
+        },
       ],
     };
   },
@@ -428,18 +448,7 @@ export default {
       }
     },
     watchHashtagInput() {
-      // Skip check if mode == get by hashtags
-      if (this.sourceConfigMode === this.MODE_HASHTAG) {
-        return;
-      }
-
-      if (!this.isStringBlank(this.instagramSourceUrl)) {
-        this.isInstagramSourceValid = true;
-        this.instagramSourceUrlErrorMsg = '';
-      } else {
-        this.isInstagramSourceValid = false;
-        this.instagramSourceUrlErrorMsg = 'Please specify a valid Instagram user URL';
-      }
+      this.$refs.form.validate();
     },
     changeMode() {
       this.instagramSourceTags = '';
@@ -463,7 +472,7 @@ export default {
     captionMsg() {
       return this.isCaptionDisplayed ? 'Display post caption' : 'Do not display post caption';
     },
-    hashtagsRules() {
+    sourceHashtagsRules() {
       const rules = [];
 
       // If mode = get posts by hashtags -> only 1 hashtag is allowed
@@ -474,31 +483,15 @@ export default {
         rules.push(v => v.split(',').length <= 1 || 'Only 1 hashtag is allowed');
       }
 
-      // Else -> multiple hashtags are allowed
-      rules.push((v) => {
-        const hashtags = v.split(',');
-        for (let i = 0; i < hashtags.length; i += 1) {
-          const hashtag = hashtags[i].trim();
-          if (!this.isStringBlank(hashtag) && !hashtag.startsWith('#')) {
-            return 'Hashtags must start with #';
-          }
-
-          const hashtagContent = hashtags[i].trim().substring(1);
-          if (!this.isStringBlank(hashtagContent) && !(/^[0-9a-zA-Z]+$/.test(hashtagContent))) {
-            return 'Hashtags can only caontain letters and number';
-          }
-        }
-        return true;
-      });
-
       return rules;
     },
-    excludedHashtagsRules() {
+    duplicatedHashtagRule() {
       const rules = [];
-      const excludedHashtags = this.excludedHashtags.replace(/\s/g, '').toLowerCase().split(',');
-      const requiredHashtags = this.instagramSourceTags.replace(/\s/g, '').toLowerCase().split(',');
 
       rules.push(() => {
+        const excludedHashtags = this.excludedHashtags.replace(/\s/g, '').toLowerCase().split(',');
+        const requiredHashtags = this.instagramSourceTags.replace(/\s/g, '').toLowerCase().split(',');
+
         if (!this.isStringBlank(this.excludedHashtags)
           && !this.isStringBlank(this.instagramSourceTags)
           && _.intersection(excludedHashtags, requiredHashtags).length > 0) {
