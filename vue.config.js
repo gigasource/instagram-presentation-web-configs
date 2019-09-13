@@ -12,11 +12,11 @@ module.exports = {
       title: 'Wifi Configurations',
       chunks: ['chunk-vendors', 'chunk-common', 'wifi'],
     },
-    login: {
-      entry: './src/pages/login/main.js',
+    authorize: {
+      entry: './src/pages/authorize/main.js',
       template: 'public/index.html',
-      title: 'Login',
-      chunks: ['chunk-vendors', 'chunk-common', 'login'],
+      title: 'Authorization',
+      chunks: ['chunk-vendors', 'chunk-common', 'authorize'],
     },
   },
 };

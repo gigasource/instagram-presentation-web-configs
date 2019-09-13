@@ -4,25 +4,25 @@
       ref="form"
       v-model="formValid">
       <v-layout wrap>
-          <v-flex xs12 md6>
-            <v-layout align-center fill-height>
-              <h3 class="indigo--text">Instagram configurations</h3>
-            </v-layout>
-          </v-flex>
-          <v-flex xs12 md6>
-            <v-radio-group v-model="sourceConfigMode" row>
-              <v-radio
-                label="Get posts by URL"
-                :value="1"
-                @change="changeMode"
-              ></v-radio>
-              <v-radio
-                label="Get posts by hashtag"
-                :value="2"
-                @change="changeMode"
-              ></v-radio>
-            </v-radio-group>
-          </v-flex>
+        <v-flex xs12 md6>
+          <v-layout align-center fill-height>
+            <h3 class="indigo--text">Instagram configurations</h3>
+          </v-layout>
+        </v-flex>
+        <v-flex xs12 md6>
+          <v-radio-group v-model="sourceConfigMode" row>
+            <v-radio
+              label="Get posts by URL"
+              :value="1"
+              @change="changeMode"
+            ></v-radio>
+            <v-radio
+              label="Get posts by hashtag"
+              :value="2"
+              @change="changeMode"
+            ></v-radio>
+          </v-radio-group>
+        </v-flex>
         <v-flex xs12>
           <v-flex xs12 v-if="sourceConfigMode === MODE_URL">
             <v-text-field
@@ -32,7 +32,7 @@
               @focus="setBaseInstagramUrl"
               v-model="instagramSourceUrl"
               label="Instagram source URL"
-              hint="Example: https://www.instagram.com/adidas"
+              hint="Example: https://www.instagram.com/adidas/"
               required/>
           </v-flex>
 
@@ -217,9 +217,43 @@
         <!--Buttons at the bottom-->
         <v-flex xs12 mt-12>
           <v-layout justify-center>
-            <v-btn class="mr-2" color="primary" :disabled="!formValid"
-                   @click="saveAppPreference" large>Save
-            </v-btn>
+            <v-dialog v-model="dialog" persistent max-width="290">
+              <template v-slot:activator="{ on }">
+                <v-btn class="mr-2" color="primary" :disabled="!formValid"
+                       @click="saveAppPreference" large>Save
+                </v-btn>
+              </template>
+              <v-card v-show="verifyDialog"
+                color="primary" dark>
+                <v-card-text>
+                  Saving config information
+                  <v-progress-linear
+                    indeterminate
+                    color="white"
+                    class="mb-0"
+                  ></v-progress-linear>
+                </v-card-text>
+              </v-card>
+              <v-card v-show="statusDialog">
+                <v-card-title class="headline" :class="dialogSuccessMsg ? 'green--text' : 'error--text'">{{responseTitle}}</v-card-title>
+
+                <v-card-text>
+                  {{responseContent}}
+                </v-card-text>
+
+                <v-card-actions>
+                  <div class="flex-grow-1"></div>
+
+                  <v-btn
+                    color="darken-1"
+                    text
+                    @click="closeDialog"
+                  >
+                    OK
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
             <v-btn color="error" @click="getAppPreferences" large dark>Reset</v-btn>
           </v-layout>
         </v-flex>
@@ -252,6 +286,12 @@ export default {
       sourceConfigMode: 1,
       MODE_URL: 1,
       MODE_HASHTAG: 2,
+      dialog: false,
+      verifyDialog: false,
+      statusDialog: false,
+      dialogSuccessMsg: true,
+      responseTitle: '',
+      responseContent: '',
       // License variables
       licenseKey: '',
       licenseKeyId: '',
@@ -308,7 +348,7 @@ export default {
 
             const hashtagContent = hashtags[i].trim().substring(1);
             if (!this.isStringBlank(hashtagContent) && !(/^[0-9a-zA-Z]+$/.test(hashtagContent))) {
-              return 'Hashtags can only caontain letters and number';
+              return 'Hashtags can only contain letters and number';
             }
           }
           return true;
@@ -339,6 +379,9 @@ export default {
         this.isLikesDisplayed = appPreferences.isLikesDisplayed;
         this.isCommentsDisplayed = appPreferences.isCommentsDisplayed;
         this.isCaptionDisplayed = appPreferences.isCaptionDisplayed;
+        this.instagramUsername = appPreferences.instagramUsername;
+        this.instagramPassword = appPreferences.instagramPassword;
+        this.isRequiredLogin = appPreferences.isRequiredLogin;
         // Size variables
         this.profilePicWidth = appPreferences.profilePicWidth;
         this.profilePicHeight = appPreferences.profilePicHeight;
@@ -353,56 +396,82 @@ export default {
         this.refreshInterval = appPreferences.refreshInterval;
 
         this.validateInstagramSourceUrl();
+
+        if (this.instagramSourceUrl.length === 0 && this.instagramSourceTags.length !== 0) {
+          this.sourceConfigMode = this.MODE_HASHTAG;
+        } else {
+          this.sourceConfigMode = this.MODE_URL;
+        }
       } catch (e) {
         console.error(e);
       }
     },
     async saveAppPreference() {
-      try {
-        const payload = {
-          instagramSourceUrl: this.instagramSourceUrl,
-          instagramSourceTags: this.instagramSourceTags,
-          numberOfPostsToDisplay: this.numberOfPostsToDisplay,
-          excludedHashtags: this.excludedHashtags,
-          isProfilePicDisplayed: this.isProfilePicDisplayed,
-          isUsernameDisplayed: this.isUsernameDisplayed,
-          isLikesDisplayed: this.isLikesDisplayed,
-          isCommentsDisplayed: this.isCommentsDisplayed,
-          isCaptionDisplayed: this.isCaptionDisplayed,
-          // Size variables
-          profilePicWidth: this.profilePicWidth,
-          profilePicHeight: this.profilePicHeight,
-          usernameTextSize: this.usernameTextSize,
-          imgMainWidth: this.imgMainWidth,
-          imgMainHeight: this.imgMainHeight,
-          likeTextSize: this.likeTextSize,
-          commentTextSize: this.commentTextSize,
-          captionTextSize: this.captionTextSize,
-          // Slideshow variables
-          presentInterval: this.presentInterval,
-          refreshInterval: this.refreshInterval,
-        };
+      this.dialog = true;
+      this.verifyDialog = true;
+      const payload = {
+        instagramSourceUrl: this.instagramSourceUrl,
+        instagramSourceTags: this.instagramSourceTags,
+        numberOfPostsToDisplay: this.numberOfPostsToDisplay,
+        excludedHashtags: this.excludedHashtags,
+        isProfilePicDisplayed: this.isProfilePicDisplayed,
+        isUsernameDisplayed: this.isUsernameDisplayed,
+        isLikesDisplayed: this.isLikesDisplayed,
+        isCommentsDisplayed: this.isCommentsDisplayed,
+        isCaptionDisplayed: this.isCaptionDisplayed,
+        instagramUsername: this.instagramUsername,
+        instagramPassword: this.instagramPassword,
+        // Size variables
+        profilePicWidth: this.profilePicWidth,
+        profilePicHeight: this.profilePicHeight,
+        usernameTextSize: this.usernameTextSize,
+        imgMainWidth: this.imgMainWidth,
+        imgMainHeight: this.imgMainHeight,
+        likeTextSize: this.likeTextSize,
+        commentTextSize: this.commentTextSize,
+        captionTextSize: this.captionTextSize,
+        // Slideshow variables
+        presentInterval: this.presentInterval,
+        refreshInterval: this.refreshInterval,
+      };
 
-        await axios.post(`http://${location.host}/api/v1/preference`, payload);
+      try {
+        const { data: responseMessage } = await axios.post(`http://${location.host}/api/v1/preference`, payload);
+        if (responseMessage.success) {
+          this.responseTitle = 'Success';
+          this.responseContent = responseMessage.success;
+          this.dialogSuccessMsg = true;
+        } else {
+          if (responseMessage.redirect) {
+              window.location.href = `http://${location.host}${responseMessage.redirect}`;
+          } else {
+            this.responseTitle = 'Error';
+            this.responseContent = responseMessage.error;
+            this.dialogSuccessMsg = false;
+          }
+        }
       } catch (e) {
-        console.error(e);
+        this.responseTitle = 'Error';
+        this.responseContent = 'Request failed';
+        this.dialogSuccessMsg = false;
       }
+      this.verifyDialog = false;
+      this.statusDialog = true;
     },
     async validateInstagramSourceUrl() {
       if (this.sourceConfigMode === this.MODE_HASHTAG) return;
 
       try {
-        if ((!this.instagramSourceUrl.toLowerCase().startsWith('https://www.instagram.com/')
-            && !this.instagramSourceUrl.toLowerCase().startsWith('https://instagram.com/')
-            && !this.instagramSourceUrl.toLowerCase().startsWith('www.instagram.com/')
-            && !this.instagramSourceUrl.toLowerCase().startsWith('instagram.com/'))
-            || this.instagramSourceUrl.split('instagram.com/')[1].trim().length === 0) {
-          throw new Error();
+        this.instagramSourceUrl = this.instagramSourceUrl.toLowerCase();
+        const urlRegex = RegExp(/^(https:\/\/)?(www.)?instagram.com\/\w+\/?$/g);
+        const isValidUrl = urlRegex.test(this.instagramSourceUrl);
+        if (!isValidUrl) {
+          throw new Error('Invalid URL');
         } else {
-          await axios.get(this.instagramSourceUrl);
+          await axios.get(this.instagramSourceUrl.concat('?__a=1'));
 
           // Fix a bug where changing mode too fast can cause incorrect validation
-          if (this.isStringBlank(this.instagramSourceUrl)) throw new Error();
+          if (this.isStringBlank(this.instagramSourceUrl)) throw new Error('Empty URL');
 
           this.instagramSourceUrlErrorMsg = '';
           this.isInstagramSourceValid = true;
@@ -454,6 +523,11 @@ export default {
       this.instagramSourceTags = '';
       this.instagramSourceUrl = '';
       this.validateInstagramSourceUrl();
+    },
+    closeDialog() {
+      this.dialog = false;
+      this.verifyDialog = false;
+      this.statusDialog = false;
     },
   },
   computed: {
