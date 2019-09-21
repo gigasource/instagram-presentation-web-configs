@@ -441,14 +441,12 @@ export default {
           this.responseTitle = 'Success';
           this.responseContent = responseMessage.success;
           this.dialogSuccessMsg = true;
+        } else if (responseMessage.redirect) {
+          window.location.href = `http://${location.host}${responseMessage.redirect}`;
         } else {
-          if (responseMessage.redirect) {
-              window.location.href = `http://${location.host}${responseMessage.redirect}`;
-          } else {
-            this.responseTitle = 'Error';
-            this.responseContent = responseMessage.error;
-            this.dialogSuccessMsg = false;
-          }
+          this.responseTitle = 'Error';
+          this.responseContent = responseMessage.error;
+          this.dialogSuccessMsg = false;
         }
       } catch (e) {
         this.responseTitle = 'Error';
@@ -463,7 +461,7 @@ export default {
 
       try {
         this.instagramSourceUrl = this.instagramSourceUrl.toLowerCase();
-        const urlRegex = RegExp(/^(https:\/\/)?(www.)?instagram.com\/\w+\/?$/g);
+        const urlRegex = RegExp(/^(https:\/\/)?(www.)?instagram.com\/\w+(\.\w)*\/?$/g);
         const isValidUrl = urlRegex.test(this.instagramSourceUrl);
         if (!isValidUrl) {
           throw new Error('Invalid URL');
