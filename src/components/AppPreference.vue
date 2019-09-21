@@ -461,7 +461,7 @@ export default {
 
       try {
         this.instagramSourceUrl = this.instagramSourceUrl.toLowerCase();
-        const urlRegex = RegExp(/^(https:\/\/)?(www.)?instagram.com\/\w+(\.\w)*\/?$/g);
+        const urlRegex = RegExp(/^(https:\/\/)?(www.)?instagram.com\/\w+(\.\w+)*\/?$/);
         const isValidUrl = urlRegex.test(this.instagramSourceUrl);
         if (!isValidUrl) {
           throw new Error('Invalid URL');
