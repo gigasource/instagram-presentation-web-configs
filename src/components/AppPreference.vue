@@ -501,7 +501,7 @@ export default {
     },
     async isValidated() {
       try {
-        const { data: responseData } = axios.get(`http://${location.host}/api/v1/license/is-validated`);
+        const { data: responseData } = await axios.get(`http://${location.host}/api/v1/license/is-validated`);
         this.isLicenseValid = responseData.validated;
       } catch (e) {
         console.warn(e);
