@@ -1,7 +1,7 @@
 <template>
   <v-container class="fill-height" fluid>
     <v-row align="center" justify="center">
-      <v-col cols="12" sm="6" md="3">
+      <v-col cols="12" sm="6" md="4">
         <v-card class="elevation-12 pa-6" >
           <v-toolbar color="transparent" flat>
             <v-img max-width="50px" src="../assets/rockiton_black.png"/>
@@ -34,12 +34,29 @@
                 required/>
             </v-flex>
           </v-flex>
-          <v-card-actions>
-            <h4 class="red--text" v-show="displayAlert">{{alertMsg}}</h4>
-            <v-spacer></v-spacer>
-            <v-btn large color="primary" v-if="!isAuthorized" @click="authorize">Submit</v-btn>
-            <v-btn large color="primary" v-else-if="isRequiredLogin" @click="saveLoginInfo">Save</v-btn>
-          </v-card-actions>
+          <v-flex xs12 v-else-if="isRequiredSecurityCode">
+            <v-text-field
+              v-model="securityCode"
+              maxlength="6"
+              label="Login Security Code"/>
+          </v-flex>
+          <h4 :class="alertClass" v-show="displayAlert">{{alertMsg}}</h4>
+            <v-container>
+              <v-row v-if="!isAuthorized">
+                <v-col cols="8" sm="8" md="8"></v-col>
+                <v-col class="d-flex align-end flex-column" cols="4" sm="4" md="4"><v-btn large color="primary" :loading="buttonDisabled" @click="authorize">Submit</v-btn></v-col>
+              </v-row>
+              <v-row v-else-if="isRequiredLogin">
+                <v-col cols="4" sm="4" md="4"><v-btn large v-if="showBackButton" :loading="buttonDisabled" @click="backToSubmitCode">Back</v-btn></v-col>
+                <v-col cols="4" sm="4" md="4"></v-col>
+                <v-col class="d-flex align-end flex-column" cols="4" sm="4" md="4"><v-btn large color="primary" :loading="buttonDisabled" @click="saveLoginInfo">Save</v-btn></v-col>
+              </v-row>
+              <v-row v-else-if="isRequiredSecurityCode">
+                <v-col cols="4" md="4" sm="4"><v-btn color="error" @click="logout" :loading="buttonDisabled">Logout</v-btn></v-col>
+                <v-col cols="4" md="4" sm="4"><v-btn @click="getNewSecurityCode" :loading="buttonDisabled">New code</v-btn></v-col>
+                <v-col class="d-flex align-end flex-column" cols="4" md="4" sm="4"><v-btn color="primary" @click="submitSecurityCode" :loading="buttonDisabled">Submit</v-btn></v-col>
+              </v-row>
+            </v-container>
         </v-card>
       </v-col>
     </v-row>
@@ -60,6 +77,10 @@ export default {
       type: Boolean,
       required: true,
     },
+    isRequiredSecurityCode: {
+      type: Boolean,
+      require: true,
+    },
   },
   data() {
     return {
@@ -70,10 +91,15 @@ export default {
       isInstagramAccountPasswordValid: false,
       displayAlert: false,
       alertMsg: '',
+      alertClass: '',
+      securityCode: '',
+      buttonDisabled: false,
+      showBackButton: false,
     };
   },
   methods: {
     async authorize() {
+      this.buttonDisabled = true;
       try {
         const payload = {
           authorizationKey: this.authorizationKey,
@@ -90,6 +116,9 @@ export default {
         console.warn(e);
         this.alertMsg = 'Authorization failed';
         this.displayAlert = true;
+        this.alertClass = 'red--text';
+      } finally {
+        this.buttonDisabled = false;
       }
     },
     validateUsername() {
@@ -99,6 +128,7 @@ export default {
       this.isInstagramAccountPasswordValid = this.instagramPassword.length !== 0;
     },
     async saveLoginInfo() {
+      this.buttonDisabled = true;
       try {
         const payload = {
           username: this.instagramUsername,
@@ -114,11 +144,68 @@ export default {
         } else {
           this.displayAlert = true;
           this.alertMsg = saveLoginStatus.error;
+          this.alertClass = 'red--text';
         }
       } catch (e) {
         console.warn(e);
         this.alertMsg = 'Saving login info failed!';
         this.displayAlert = true;
+        this.alertClass = 'red--text';
+      } finally {
+        this.buttonDisabled = false;
+      }
+    },
+    async submitSecurityCode() {
+      this.buttonDisabled = true;
+      try {
+        const payload = {
+          securityCode: this.securityCode,
+        };
+
+        const { data: saveSecurityCodeStatus } = await axios.post(`http://${location.host}/api/v1/submit-security-code`, payload);
+        if (saveSecurityCodeStatus.success) {
+          this.alertMsg = 'Submit code successful. Retry submitting if device\'s screen show error message';
+          this.displayAlert = true;
+          this.alertClass = 'green--text';
+        } else {
+          this.displayAlert = true;
+          this.alertMsg = saveSecurityCodeStatus.error;
+          this.alertClass = 'red--text';
+        }
+      } catch (e) {
+        console.warn(e);
+        this.alertMsg = 'Submitting security code failed!';
+        this.displayAlert = true;
+        this.alertClass = 'red--text';
+      } finally {
+        this.buttonDisabled = false;
+      }
+    },
+    logout() {
+      this.isRequiredSecurityCode = false;
+      this.isRequiredLogin = true;
+      this.showBackButton = true;
+      this.displayAlert = false;
+    },
+    backToSubmitCode() {
+      this.isRequiredSecurityCode = true;
+      this.isRequiredLogin = false;
+      this.displayAlert = false;
+    },
+    async getNewSecurityCode() {
+      this.buttonDisabled = true;
+      try {
+        await axios.get(`http://${location.host}/api/v1/get-new-code`);
+        this.alertMsg = 'Please check your email';
+        this.displayAlert = true;
+        this.alertClass = 'green--text';
+      } catch (e) {
+        console.warn(e);
+        this.alertMsg = 'Send request failed';
+        this.displayAlert = true;
+        this.alertClass = 'red--text';
+      } finally {
+        this.buttonDisabled = false;
       }
     },
   },

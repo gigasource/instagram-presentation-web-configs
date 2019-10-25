@@ -10,4 +10,9 @@ async function isRequiredInstagramLogin() {
   return loginRequire.isRequiredLogin;
 }
 
-export { isUserAuthorized, isRequiredInstagramLogin };
+async function isRequiredLoginSecurityCode() {
+  const { data: loginSecurity } = await axios.get(`http://${location.host}/api/v1/is-required-security-code`);
+  return loginSecurity.isRequiredSecurityCode;
+}
+
+export { isUserAuthorized, isRequiredInstagramLogin, isRequiredLoginSecurityCode };

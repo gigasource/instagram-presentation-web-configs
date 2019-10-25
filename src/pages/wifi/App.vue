@@ -8,7 +8,7 @@
 
 <script>
 import WifiConfig from '../../components/WifiConfig';
-import { isUserAuthorized, isRequiredInstagramLogin } from '../authorization';
+import { isUserAuthorized, isRequiredInstagramLogin, isRequiredLoginSecurityCode } from '../authorization';
 
 export default {
   name: 'App',
@@ -24,8 +24,9 @@ export default {
     try {
       const isAuthorized = await isUserAuthorized();
       const isRequiredLogin = await isRequiredInstagramLogin();
+      const isRequiredSecurityCode = await isRequiredLoginSecurityCode();
 
-      this.displayable = isAuthorized && !isRequiredLogin;
+      this.displayable = isAuthorized && !isRequiredLogin && !isRequiredSecurityCode;
 
       if (!this.displayable) {
         window.location.href = `http://${location.host}/authorize`;
