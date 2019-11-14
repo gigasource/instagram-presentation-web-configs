@@ -71,26 +71,18 @@
         </v-flex>
 
         <v-flex xs12 mt-6>
-          <h3 class="indigo--text">Size configurations</h3>
+          <v-row>
+            <v-col cols="9" class="d-flex align-center">
+              <h3 class="indigo--text">Size configurations</h3>
+            </v-col>
+            <v-col cols="3">
+              <v-switch
+                v-model="autoSize"
+                label="Auto"
+              ></v-switch>
+            </v-col>
+          </v-row>
         </v-flex>
-        <v-flex xs6>
-          <v-text-field
-            type="number"
-            class="pr-3"
-            :rules="widthRules"
-            v-model="profilePicWidth"
-            label="Profile image width"
-            required/>
-        </v-flex>
-        <v-flex xs6>
-          <v-text-field
-            type="number"
-            :rules="heightRules"
-            v-model="profilePicHeight"
-            label="Profile image height"
-            required/>
-        </v-flex>
-
         <v-flex xs6>
           <v-text-field
             type="number"
@@ -98,6 +90,8 @@
             :rules="widthRules"
             v-model="imgMainWidth"
             label="Main image width"
+            suffix="px"
+            :disabled="autoSize"
             required/>
         </v-flex>
         <v-flex xs6>
@@ -106,6 +100,29 @@
             :rules="heightRules"
             v-model="imgMainHeight"
             label="Main image height"
+            suffix="px"
+            :disabled="autoSize"
+            required/>
+        </v-flex>
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            class="pr-3"
+            :rules="widthRules"
+            v-model="profilePicWidth"
+            label="Profile image width"
+            suffix="px"
+            :disabled="autoSize"
+            required/>
+        </v-flex>
+        <v-flex xs6>
+          <v-text-field
+            type="number"
+            :rules="heightRules"
+            v-model="profilePicHeight"
+            label="Profile image height"
+            suffix="px"
+            :disabled="autoSize"
             required/>
         </v-flex>
 
@@ -116,6 +133,8 @@
             :rules="sizeRules"
             v-model="usernameTextSize"
             label="Username text size"
+            suffix="pt"
+            :disabled="autoSize"
             required/>
         </v-flex>
 
@@ -125,6 +144,8 @@
             :rules="sizeRules"
             v-model="likeTextSize"
             label="Likes text size"
+            suffix="pt"
+            :disabled="autoSize"
             required/>
         </v-flex>
 
@@ -135,6 +156,8 @@
             :rules="sizeRules"
             v-model="commentTextSize"
             label="Comments text size"
+            suffix="pt"
+            :disabled="autoSize"
             required/>
         </v-flex>
 
@@ -144,16 +167,22 @@
             :rules="sizeRules"
             v-model="captionTextSize"
             label="Caption text size"
+            suffix="pt"
+            :disabled="autoSize"
             required/>
         </v-flex>
 
+        <v-flex xs12 mt-6>
+          <h3 class="indigo--text">Slide configurations</h3>
+        </v-flex>
         <v-flex xs6>
           <v-text-field
             type="number"
             class="pr-3"
             :rules="presentIntervalRules"
             v-model="presentInterval"
-            label="Each image is shown for: (in milliseconds)"
+            label="Each image is shown for"
+            suffix="sec"
             required/>
         </v-flex>
         <v-flex xs6>
@@ -161,7 +190,8 @@
             type="number"
             :rules="refreshIntervalRules"
             v-model="refreshInterval"
-            label="Images are refreshed every: (in minutes)"
+            label="Images are refreshed every"
+            suffix="min"
             required/>
         </v-flex>
 
@@ -188,6 +218,13 @@
           <v-switch v-model="isCaptionDisplayed" :label="captionMsg"/>
         </v-flex>
 
+        <v-flex xs12 mt-6>
+          <h3 class="indigo--text">Status configurations</h3>
+        </v-flex>
+        <v-flex xs12>
+          <v-switch v-model="isNetworkStrengthDisplayed" :label="networkStrengthMsg"/>
+        </v-flex>
+
         <template v-if="!isLicenseValid">
           <v-flex xs12>
             <h3 class="indigo--text">License configurations (Your key id is {{licenseKeyId}})</h3>
@@ -210,17 +247,17 @@
 
         <v-flex xs12>
           <h6 class="green--text" v-if="isLicenseSubmitted && isLicenseValid">
-            Success! please click "Save" to refresh the application</h6>
+            Success! please click "Restart" to refresh the application</h6>
           <h6 class="red--text" v-else-if="isLicenseSubmitted && !isLicenseValid">
             Invalid license key</h6>
         </v-flex>
         <!--Buttons at the bottom-->
         <v-flex xs12 mt-12>
-          <v-layout justify-center>
+          <v-layout justify-space-around>
             <v-dialog v-model="dialog" persistent max-width="290">
               <template v-slot:activator="{ on }">
                 <v-btn class="mr-2" color="primary" :disabled="!formValid"
-                       @click="saveAppPreference" large>Save
+                       @click="saveAppPreference" large>Save & Restart
                 </v-btn>
               </template>
               <v-card v-show="verifyDialog"
@@ -254,7 +291,7 @@
                 </v-card-actions>
               </v-card>
             </v-dialog>
-            <v-btn color="error" @click="getAppPreferences" large dark>Reset</v-btn>
+            <v-btn color="error" @click="getAppPreferences" large dark>Last Config</v-btn>
           </v-layout>
         </v-flex>
       </v-layout>
@@ -279,6 +316,7 @@ export default {
       isLikesDisplayed: false,
       isCommentsDisplayed: false,
       isCaptionDisplayed: false,
+      isNetworkStrengthDisplayed: false,
       isInstagramSourceValid: false,
       isInstagramSourceTagsValid: true,
       isExcludedTagsValid: true,
@@ -300,6 +338,7 @@ export default {
       // Messages
       instagramSourceUrlErrorMsg: 'Please specify a valid Instagram user URL',
       // Size variables
+      autoSize: true,
       profilePicWidth: 0,
       profilePicHeight: 0,
       usernameTextSize: 0,
@@ -313,28 +352,28 @@ export default {
       refreshInterval: 0,
       // Validation rules
       numberOfPostRules: [
-        v => /^-{0,1}\d+$/.test(v) || 'Number of post must be an integer',
+        v => /^-{0,1}\d+$/.test(v) || 'Number of post must be a whole number',
         v => parseInt(v, 10) > 0 || 'Minimum number is 1',
         v => parseInt(v, 10) <= 100 || 'Maximum number is 100',
       ],
       widthRules: [
-        v => /^-{0,1}\d+$/.test(v) || 'Width must be an integer',
+        v => /^-{0,1}\d+$/.test(v) || 'Width must be a whole number',
         v => parseInt(v, 10) >= 0 || 'Minimum width is 0',
       ],
       heightRules: [
-        v => /^-{0,1}\d+$/.test(v) || 'Height must be an integer',
+        v => /^-{0,1}\d+$/.test(v) || 'Height must be a whole number',
         v => parseInt(v, 10) >= 0 || 'Minimum height is 0',
       ],
       sizeRules: [
-        v => /^-{0,1}\d+$/.test(v) || 'Size must be an integer',
+        v => /^-{0,1}\d+$/.test(v) || 'Size must be a whole number',
         v => parseInt(v, 10) >= 0 || 'Minimum size is 0',
       ],
       presentIntervalRules: [
-        v => /^-{0,1}\d+$/.test(v) || 'Interval must be an integer',
-        v => parseInt(v, 10) >= 5000 || 'Minimum interval is 5000 milliseconds',
+        v => /^-{0,1}\d+$/.test(v) || 'Interval must be a whole number',
+        v => parseInt(v, 10) >= 5 || 'Minimum interval is 5 seconds',
       ],
       refreshIntervalRules: [
-        v => /^-{0,1}\d+$/.test(v) || 'Interval must be an integer',
+        v => /^-{0,1}\d+$/.test(v) || 'Interval must be a whole number',
         v => parseInt(v, 10) >= 1 || 'Minimum interval is 1 minutes',
       ],
       hashtagInvalidCharRule: [
@@ -343,12 +382,14 @@ export default {
           for (let i = 0; i < hashtags.length; i += 1) {
             const hashtag = hashtags[i].trim();
             if (!this.isStringBlank(hashtag) && !hashtag.startsWith('#')) {
-              return 'Hashtags must start with #';
+              return 'Hashtag must start with #';
             }
 
             const hashtagContent = hashtags[i].trim().substring(1);
-            if (!this.isStringBlank(hashtagContent) && !(/^[0-9a-zA-Z]+$/.test(hashtagContent))) {
-              return 'Hashtags can only contain letters and number';
+            const encodedHashtag = encodeURI(hashtagContent);
+            const regex = new RegExp(/^([!#$&-;=?-[\]_a-z~]|%[0-9a-fA-F]{2})+$/);
+            if (!this.isStringBlank(hashtagContent) && !regex.test(encodedHashtag)) {
+              return 'Invalid hashtag';
             }
           }
           return true;
@@ -379,10 +420,12 @@ export default {
         this.isLikesDisplayed = appPreferences.isLikesDisplayed;
         this.isCommentsDisplayed = appPreferences.isCommentsDisplayed;
         this.isCaptionDisplayed = appPreferences.isCaptionDisplayed;
+        this.isNetworkStrengthDisplayed = appPreferences.isNetworkStrengthDisplayed;
         this.instagramUsername = appPreferences.instagramUsername;
         this.instagramPassword = appPreferences.instagramPassword;
         this.isRequiredLogin = appPreferences.isRequiredLogin;
         // Size variables
+        this.autoSize = appPreferences.autoSize;
         this.profilePicWidth = appPreferences.profilePicWidth;
         this.profilePicHeight = appPreferences.profilePicHeight;
         this.imgMainWidth = appPreferences.imgMainWidth;
@@ -419,9 +462,11 @@ export default {
         isLikesDisplayed: this.isLikesDisplayed,
         isCommentsDisplayed: this.isCommentsDisplayed,
         isCaptionDisplayed: this.isCaptionDisplayed,
+        isNetworkStrengthDisplayed: this.isNetworkStrengthDisplayed,
         instagramUsername: this.instagramUsername,
         instagramPassword: this.instagramPassword,
         // Size variables
+        autoSize: this.autoSize,
         profilePicWidth: this.profilePicWidth,
         profilePicHeight: this.profilePicHeight,
         usernameTextSize: this.usernameTextSize,
@@ -543,6 +588,9 @@ export default {
     },
     captionMsg() {
       return this.isCaptionDisplayed ? 'Display post caption' : 'Do not display post caption';
+    },
+    networkStrengthMsg() {
+      return this.isNetworkStrengthDisplayed ? 'Display network strength' : 'Do not display network strength';
     },
     sourceHashtagsRules() {
       const rules = [];

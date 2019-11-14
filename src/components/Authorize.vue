@@ -164,7 +164,7 @@ export default {
 
         const { data: saveSecurityCodeStatus } = await axios.post(`http://${location.host}/api/v1/submit-security-code`, payload);
         if (saveSecurityCodeStatus.success) {
-          this.alertMsg = 'Submit code successful. Retry submitting if device\'s screen show error message';
+          this.alertMsg = 'Submit code successfully. Retry submitting if device\'s screen shows error message';
           this.displayAlert = true;
           this.alertClass = 'green--text';
         } else {
